@@ -1,0 +1,341 @@
+﻿@{
+    ViewData["Title"] = "Firebase Activity";
+}
+<h1>@ViewData["Title"]</h1>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <title>Scripting Module via Firebase</title>
+        <style>
+            h1, h3, h4 
+            {
+                font-size: 3.2vmax;
+            }
+
+            table 
+            {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            th, td 
+            {
+                text-align: left;
+                padding: 8px;
+            }
+
+            tr:nth-child(even) 
+            {
+                background-color: #f2f2f2;
+            }
+
+            th 
+            {
+                background-color: #04AA6D;
+                color: white;
+            }
+
+            .section 
+            {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+
+            .section-content 
+            {
+                flex: 1;
+                padding: 20px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container-fluid">
+            <div class="row" style="background-color:#2061ab;">
+                <div class="col-sm-12">
+                    <center><h1 style="color:white;">Student Management System</h1></center>
+                </div>
+            </div>
+
+            <div class="row" style="min-height: 0vh;">
+                <div class="col-sm-6" style="background-color:#709917;">
+                    <div class="section">
+                        <center>
+                            <b style="color:white; font-size:35px;">Student Info Entry</b>
+                        </center>
+                        <div class="section-content" style="background-color:#e6f0bd;">
+                            <center>
+                                <h5>ID</h5>
+                                <input id="enterID" type="text">
+
+                                <h5>First Name</h5>
+                                <input id="enterFName" type="text">
+
+                                <h5>Last Name</h5>
+                                <input id="enterLName" type="text">
+
+                                <h5>Age</h5>
+                                <input id="enterAge" type="number">
+
+                                <h5>Course</h5>
+                                <input id="enterCourse" type="text">
+                                <br><br>
+
+                                <button id="insert">INSERT</button>
+                                <button id="update">UPDATE</button>
+                                <button id="remove">REMOVE</button>
+                                <br><br>
+                            </center>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6" style="background-color:#ff7d19;">
+                    <div class="section">
+                        <center>
+                            <b style="color:white; font-size:35px;">Search Info by ID</b>
+                        </center>
+                        <div class="section-content" style="background-color:#ffeeb8;">
+                            <center>
+                                <h5>ID</h5>
+                                <input id="searchID" type="text"> <br><br>
+                                <button id="search">search</button>
+                                <br><br>
+                                
+                                <b style="font-size:30px;">Info Results:</b>
+                            
+                                <h5 id="nameHere" type="text">NAME HERE</h5>
+                                <h5 id="ageHere" type="number">AGE HERE</h5>
+                                <h5 id="courseHere" type="text">COURSE HERE</h5>
+                                <br><br>
+                            </center>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container mt-3" style="overflow-x: auto;">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student I.D.</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Course</th>
+                        </tr>
+                    </thead>
+                    <tbody id="Databody">
+                        @foreach (MyData students in Model)
+                        {
+                            <tr class = "active-row">
+                                <td>@students.Id</td>
+                                <td>@students.Name</td>
+                                <td>@students.Age</td>
+                                <td>@students.Course</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script type="module">
+            // Import the functions you need from the SDKs you need
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+            // TODO: Add SDKs for Firebase products that you want to use
+            // https://firebase.google.com/docs/web/setup#available-libraries
+
+            // Your web app's Firebase configuration
+            const firebaseConfig = 
+            {
+                apiKey: "AIzaSyAwwRR6Brdg4VfpX8dQLDyy0pYpmPBgRoE",
+                authDomain: "it114l-mod1.firebaseapp.com",
+                databaseURL: "https://it114l-mod1-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "it114l-mod1",
+                storageBucket: "it114l-mod1.firebasestorage.app",
+                messagingSenderId: "802817226982",
+                appId: "1:802817226982:web:fbc718560452865992e327"
+            };
+
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+
+            import { getDatabase, ref, get, set, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+            const db = getDatabase();
+
+            //lets create instance of objects via DOMs
+            var enterID = document.querySelector("#enterID");
+            var enterFName = document.querySelector("#enterFName");
+            var enterLName = document.querySelector("#enterLName");
+            var enterAge = document.querySelector("#enterAge");
+            var enterCourse = document.querySelector("#enterCourse");
+
+            var searchID = document.querySelector("#searchID");
+            var searchName = document.querySelector("#nameHere");
+            var searchAge = document.querySelector("#ageHere");
+            var searchCourse = document.querySelector("#courseHere");
+
+            var insertBtn = document.querySelector("#insert");
+            var updateBtn = document.querySelector("#update");
+            var removeBtn = document.querySelector("#remove");
+            var searchBtn = document.querySelector("#search");
+            var reloadBtn = document.querySelector("#reload");
+            var x = document.getElementById("find");
+
+            //Input data from page to Firebase database
+            function InsertData()
+            {
+                const insertValue = 
+                {
+                    Name: enterFName.value + " " + enterLName.value,
+                    ID: enterID.value,
+                    Age: enterAge.value,
+                    Course: enterCourse.value
+                };
+                try
+                {
+                    set(ref(db, "StudRecords/" + enterID.value), insertValue);
+                    alert("Data added successfully");
+                }
+                catch(error)
+                {
+                    alert(error);
+                }
+            }
+
+            function UpdateData()
+            {
+                const updateValue = 
+                {
+                    Name: enterFName.value + " " + enterLName.value,
+                    ID: enterID.value,
+                    Age: enterAge.value,
+                    Course: enterCourse.value
+                };
+                try
+                {
+                    update(ref(db, "StudRecords/" + enterID.value), updateValue);
+                    alert("Data update successfully");
+                }
+                catch(error)
+                {
+                    alert(error);
+                }
+            }
+
+            //deleting data from Firebase
+            function RemoveData()
+            {
+                try
+                {
+                    remove(ref(db, "StudRecords/" + enterID.value))
+                    alert("Data deleted successfully");
+                }
+                catch(error)
+                {
+                    alert(error);
+                }
+            }
+
+            //to search the data from Firebase database and output its value
+            async function SearchData()
+            {
+                const dbref = ref(db);
+
+                try
+                {
+                    const snapshot = await get(child(dbref, "StudRecords/" + searchID.value));
+
+                    if (snapshot.exists())
+                    {
+                        searchName.innerHTML = "Name: " + snapshot.val().Name;
+                        searchAge.innerHTML = "Age: " + snapshot.val().Age;
+                        searchCourse.innerHTML = "Course: " + snapshot.val().Course;
+                    }
+                    else
+                    {
+                        alert("No data found");
+                    }
+                }
+                catch(error)
+                {
+                    alert(error);
+                }
+            }
+
+            //Buttons
+            insertBtn.addEventListener('click', InsertData);
+            updateBtn.addEventListener('click', UpdateData);
+            removeBtn.addEventListener('click', RemoveData);
+            searchBtn.addEventListener('click', SearchData);
+
+            //function for the table to show data at real time
+            let studentlist = [];
+            let sno = 0;
+            let tbody = document.getElementById("Databody");
+            /*
+            function GetDataNow()
+            {
+                function GetData(snapshot)
+                {
+                    function ProcessStudent(student)
+                    {
+                        studentlist.push(student.val())
+                    }
+                    function AddRecords(student)
+                    {
+                        let trow = document.createElement('tr');
+                        let td1 = document.createElement('td');
+                        let td2 = document.createElement('td');
+                        let td3 = document.createElement('td');
+                        let td4 = document.createElement('td');
+                        let td5 = document.createElement('td');
+
+                        td1.innerHTML = ++sno;
+                        td2.innerHTML = student.ID;
+                        td3.innerHTML = student.Name;
+                        td4.innerHTML = student.Age;
+                        td5.innerHTML = student.Course;
+
+                        trow.append(td1, td2, td3, td4, td5);
+                        tbody.append(trow);
+                    }
+                    try
+                    {
+                        studentlist = [];
+                        
+                        snapshot.forEach(ProcessStudent);
+                        sno = 0;
+                        tbody.innerHTML = "";
+                        studentlist.forEach(AddRecords);
+                    }
+                    catch(error)
+                    {
+                        alert(error);
+                    }
+                }
+                const Refdb = ref(db, "StudRecords/");
+
+                try
+                {
+                    studentlist = [];
+                    onValue(Refdb, GetData);
+                }
+                catch(error)
+                {
+                    alert(error);
+                }
+            }
+
+            //event listener that loads the data as soon as the page loads
+            window.addEventListener('load', GetDataNow);
+            */
+        </script>
+    </body>
+</html>
